@@ -1,0 +1,1 @@
+{ "name": "boxed-code-blocks", "version": "0.1.0", "description": "Draws fenced code blocks in assistant replies inside a bordered box, in the terminal only" }
