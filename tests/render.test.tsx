@@ -18,6 +18,22 @@ test('terminal: a fenced block is drawn by the engine renderer inside a bordered
   await ui.unmount()
 })
 
+test('terminal: each box has its own copy button, which copies the source with no border', async ($, on) => {
+  const copied: string[] = []
+  on('ui.copy', (_, e) => {
+    copied.push(e.text)
+    return { value: { isCopied: true } }
+  })
+  on('ui.toast', () => ({ value: undefined }))
+  const two = `${REPLY}\n\n\`\`\`bash\necho "second"\n\`\`\``
+  const ui = await $.ui.mount({ ...message(two), surface: 'terminal' })
+  expect(await ui.findAll({ type: 'Button' })).toHaveLength(2)
+  await ui.press({ key: 'copy:0' })
+  await ui.press({ key: 'copy:1' })
+  expect(copied).toEqual(['line one\n  line two', 'echo "second"'])
+  await ui.unmount()
+})
+
 test('terminal: a fenced block inside a quote is boxed too, drawn quoted', async $ => {
   const quoted = '> Quoted text.\n>\n> ```bash\n> echo "hi"\n> ```'
   const ui = await $.ui.mount({ ...message(quoted), surface: 'terminal' })

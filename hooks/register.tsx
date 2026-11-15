@@ -10,20 +10,39 @@ export const register: Register = on => {
     const segments = split(e.props.text)
     if (!hasCode(segments)) return next(e)
 
-    const { Box, Markdown, Text } = $.ui.resolve(e)
+    const { Box, Button, Markdown, Text } = $.ui.resolve(e)
+
+    // Each code box's copy button, numbered in reply order so every Button has its own key.
+    let boxCount = 0
 
     // Code drawn by the engine's own markdown renderer, so its colours follow the terminal
     // theme. Inside a quote it is drawn quoted (italic), and the renderer's own bars are
-    // shifted out of the box's clipped area.
+    // shifted out of the box's clipped area. A copy button sits on the top border and puts
+    // the block's source on the clipboard as written, with no border or padding.
     const codeBox = (s: { source: string; language?: string }, depth = 0) => {
       const prefix = '> '.repeat(depth)
       const fence = ['```' + (s.language ?? ''), ...s.source.split('\n'), '```'].map(l => prefix + l).join('\n')
+      const key = `copy:${boxCount++}`
       return (
-        <Box borderStyle="single" borderColor="inactive" paddingX={1}>
-          <Box overflow="hidden" flexGrow={1}>
-            <Box marginLeft={-2 * depth} flexGrow={1}>
-              <Markdown text={fence} />
+        <Box flexGrow={1}>
+          <Box borderStyle="single" borderColor="inactive" paddingX={1} flexGrow={1}>
+            <Box overflow="hidden" flexGrow={1}>
+              <Box marginLeft={-2 * depth} flexGrow={1}>
+                <Markdown text={fence} />
+              </Box>
             </Box>
+          </Box>
+          <Box position="absolute" top={0} right={2}>
+            <Button
+              key={key}
+              label="copy"
+              plain
+              dimColor
+              onPress={async press => {
+                const result = await $.ui.copy({ text: s.source, surface: press.surface })
+                $.ui.toast(result.isCopied ? 'Copied code block' : `Copy failed: ${result.reason}`)
+              }}
+            />
           </Box>
         </Box>
       )
